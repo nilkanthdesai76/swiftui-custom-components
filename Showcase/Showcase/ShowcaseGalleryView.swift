@@ -3,34 +3,38 @@ import Combine
 import SwiftUICustomComponents
 
 public enum ComponentCategory: String, CaseIterable, Identifiable {
-    case tabBars = "Tab Bars (5)"
+    case tabBars = "Tab Bars (6)"
     case transitions = "Transitions (4)"
-    case controls = "Controls (20)"
-    case backgrounds = "Backgrounds (3)"
+    case controls = "Controls (24)"
+    case backgrounds = "Backgrounds (4)"
     
     public var id: String { rawValue }
 }
 
 public enum ControlsSubCategory: String, CaseIterable, Identifiable {
-    case buttons = "Buttons (7)"
-    case sliders = "Sliders (4)"
-    case switches = "Switches (4)"
-    case pickers = "Pickers & 3D (4)"
-    case drawer = "Sheet (1)"
+    case buttons = "Buttons (9)"
+    case sliders = "Sliders (5)"
+    case switches = "Switches (5)"
+    case pickers = "Pickers & 3D (5)"
     
     public var id: String { rawValue }
 }
 
 public struct ShowcaseGalleryView: View {
-    @State private var selectedCategory: ComponentCategory = .controls
+    @State private var selectedCategory: ComponentCategory = .tabBars
     
     // Tab Bar State
-    @State private var selectedTabBarStyle: Int = 0
     @State private var activeTabId: String = "home"
+    @State private var selectedTabAccentColor: Color = .blue
+    @State private var morphingLinePosition: MorphingLineTabBar.LinePosition = .top
+    @State private var heroButtonAngle: Double = 0
+    @State private var heroActionMessage: String = "Tap hero (+) to trigger action"
+    @State private var sampleBadgeCount: Int = 4
     
-    // Navigation State
+    // Navigation Transitions State
     @State private var selectedHeroCard: HeroCardItem? = nil
     @State private var isRipplePresented: Bool = false
+    @State private var rippleColorIndex: Int = 0
     @State private var isCubeFlipped: Bool = false
     @State private var isSheetStackPresented: Bool = false
     
@@ -42,37 +46,41 @@ public struct ShowcaseGalleryView: View {
     @State private var morphingButtonState: ButtonActionState = .idle
     @State private var burstCount: Int = 0
     @State private var neonTapCount: Int = 0
+    @State private var magneticPressCount: Int = 0
+    @State private var glowTapCount: Int = 0
     
     // Sliders & Dials State
     @State private var dialValue: Double = 72
     @State private var waveformProgress: Double = 0.42
     @State private var sliderValue: Double = 65
     @State private var steppedSliderValue: Int = 2
+    @State private var verticalVolumeValue: Double = 68
     
     // Switches State
     @State private var isNightTheme: Bool = false
     @State private var isAppLocked: Bool = true
     @State private var isGlowSwitchOn: Bool = true
     @State private var isLiquidSwitchOn: Bool = true
+    @State private var isMuteSwitchOn: Bool = false
     
     // Pickers & Cards State
     @State private var selectedSegment: String = "weekly"
     @State private var stepperValue: Int = 3
     @State private var selectedTags: Set<String> = ["swiftui", "design"]
-    
-    // Drawer State
-    @State private var isCustomSheetOpen: Bool = false
-    @State private var sheetDetent: SheetDetent = .half
+    @State private var selectedColorSwatchId: String = "blue"
     
     // Background State
     @State private var selectedBackground: Int = 0
+    @State private var backgroundAnimationSpeed: Double = 1.0
     
-    let sampleTabs = [
-        TabBarItem(id: "home", title: "Feed", icon: "house", activeIcon: "house.fill"),
-        TabBarItem(id: "search", title: "Explore", icon: "magnifyingglass"),
-        TabBarItem(id: "alerts", title: "Alerts", icon: "bell", activeIcon: "bell.fill", badgeCount: 4),
-        TabBarItem(id: "profile", title: "Account", icon: "person", activeIcon: "person.fill")
-    ]
+    var sampleTabs: [TabBarItem] {
+        [
+            TabBarItem(id: "home", title: "Feed", icon: "house", activeIcon: "house.fill"),
+            TabBarItem(id: "search", title: "Explore", icon: "magnifyingglass"),
+            TabBarItem(id: "alerts", title: "Alerts", icon: "bell", activeIcon: "bell.fill", badgeCount: sampleBadgeCount),
+            TabBarItem(id: "profile", title: "Account", icon: "person", activeIcon: "person.fill")
+        ]
+    }
     
     let sampleHeroCards = [
         HeroCardItem(
@@ -109,6 +117,20 @@ public struct ShowcaseGalleryView: View {
         TagItem(id: "shaders", name: "Metal Shaders", icon: "sparkles")
     ]
     
+    let sampleColorSwatches = [
+        ColorSwatchItem(id: "blue", name: "Electric Blue", color: .blue, hexCode: "#007AFF"),
+        ColorSwatchItem(id: "purple", name: "Neon Violet", color: .purple, hexCode: "#AF52DE"),
+        ColorSwatchItem(id: "pink", name: "Cyber Pink", color: .pink, hexCode: "#FF2D55"),
+        ColorSwatchItem(id: "orange", name: "Sunset Orange", color: .orange, hexCode: "#FF9500"),
+        ColorSwatchItem(id: "green", name: "Mint Emerald", color: Color(red: 16/255, green: 185/255, blue: 129/255), hexCode: "#10B981")
+    ]
+    
+    let rippleGradients: [[Color]] = [
+        [Color.purple, Color.indigo, Color.black],
+        [Color.cyan, Color.blue, Color.black],
+        [Color(red: 16/255, green: 185/255, blue: 129/255), Color.teal, Color.black]
+    ]
+    
     public init() {}
     
     public var body: some View {
@@ -137,13 +159,13 @@ public struct ShowcaseGalleryView: View {
                         VStack(spacing: 24) {
                             switch selectedCategory {
                             case .tabBars:
-                                tabBarsShowcase
+                                tabBarsSection
                             case .transitions:
-                                transitionsShowcase
+                                transitionsSection
                             case .controls:
-                                controlsShowcase
+                                controlsSection
                             case .backgrounds:
-                                backgroundsShowcase
+                                backgroundsSection
                             }
                         }
                         .padding(.horizontal, 16)
@@ -158,244 +180,451 @@ public struct ShowcaseGalleryView: View {
         }
     }
     
-    // MARK: - 1. Tab Bars Showcase
+    // MARK: - 1. Tab Bars Showcase (6 Dedicated Cards)
     
-    private var tabBarsShowcase: some View {
+    private var tabBarsSection: some View {
         VStack(spacing: 20) {
             headerCard(
-                title: "5 Unique Animated Tab Bars",
-                desc: "Switch between custom bottom navigation bars with elastic springs, curved hero buttons, and glowing trackers."
+                title: "6 Animated Navigation Tab Bars",
+                desc: "Fluid bottom navigation docks with elastic springs, concave hero curves, illuminated laser lines, dynamic expanding capsules, water bubbles, and magnifying glass docks."
             )
             
-            Picker("Tab Bar Style", selection: $selectedTabBarStyle) {
-                Text("Liquid Elastic").tag(0)
-                Text("Curved Notch").tag(1)
-                Text("Glow Line").tag(2)
-                Text("Expanding").tag(3)
-                Text("Floating").tag(4)
-            }
-            .pickerStyle(.segmented)
-            
-            // Active Tab Preview Content Card
-            VStack(spacing: 16) {
-                Image(systemName: sampleTabs.first(where: { $0.id == activeTabId })?.activeIcon ?? "house.fill")
-                    .font(.system(size: 48))
-                    .foregroundColor(.blue)
-                    .padding(.top, 24)
-                
-                Text("Active Tab: \(sampleTabs.first(where: { $0.id == activeTabId })?.title ?? "")")
-                    .font(.title3.bold())
-                
-                Text("Tap the tab items below to observe liquid morphing, haptic bursts, and spring physics.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 24)
-            }
-            .frame(maxWidth: .infinity)
-            .background(Color.appSecondarySystemBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            
-            // Live Tab Bar Rendering
-            VStack(spacing: 8) {
-                Text("LIVE INTERACTIVE TAB BAR")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundColor(.secondary)
-                
-                switch selectedTabBarStyle {
-                case 0:
-                    LiquidElasticTabBar(items: sampleTabs, selectedTabId: $activeTabId)
-                case 1:
-                    CurvedNotchHeroTabBar(items: sampleTabs, selectedTabId: $activeTabId) {}
-                case 2:
-                    MorphingLineTabBar(items: sampleTabs, selectedTabId: $activeTabId)
-                case 3:
-                    ExpandingLabelTabBar(items: sampleTabs, selectedTabId: $activeTabId)
-                case 4:
-                    FloatingBubbleTabBar(items: sampleTabs, selectedTabId: $activeTabId)
-                default:
-                    EmptyView()
+            // Interactive Tab State Inspector Stage
+            showcaseCard(
+                title: "Live Active Tab Inspector",
+                badge: "INTERACTIVE STAGE",
+                desc: "Tap any tab on any bar below to observe synchronous state updates, tactile haptics, and spring kinematics.",
+                badgeColor: selectedTabAccentColor
+            ) {
+                VStack(spacing: 16) {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(selectedTabAccentColor.opacity(0.18))
+                                .frame(width: 58, height: 58)
+                            
+                            Image(systemName: sampleTabs.first(where: { $0.id == activeTabId })?.activeIcon ?? "house.fill")
+                                .font(.system(size: 26, weight: .bold))
+                                .foregroundColor(selectedTabAccentColor)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Active Tab: \(sampleTabs.first(where: { $0.id == activeTabId })?.title ?? "")")
+                                .font(.headline.bold())
+                            
+                            Text("Identifier: \"\(activeTabId)\" • Unread: \(sampleBadgeCount)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                sampleBadgeCount = (sampleBadgeCount + 1) % 10
+                            }
+                        } label: {
+                            VStack(spacing: 2) {
+                                Image(systemName: "bell.badge.fill")
+                                    .font(.caption)
+                                Text("+1 Badge")
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                            .foregroundColor(selectedTabAccentColor)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(selectedTabAccentColor.opacity(0.12)))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
+                    // Accent Color Switcher
+                    HStack(spacing: 10) {
+                        Text("Dock Accent:")
+                            .font(.caption.bold())
+                            .foregroundColor(.secondary)
+                        
+                        ForEach([Color.blue, Color.purple, Color.cyan, Color.orange, Color.emeraldColor], id: \.description) { col in
+                            Circle()
+                                .fill(col)
+                                .frame(width: 22, height: 22)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white, lineWidth: selectedTabAccentColor == col ? 2 : 0)
+                                )
+                                .scaleEffect(selectedTabAccentColor == col ? 1.2 : 1.0)
+                                .onTapGesture {
+                                    HapticFeedback.selection()
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        selectedTabAccentColor = col
+                                    }
+                                }
+                        }
+                        Spacer()
+                    }
                 }
             }
-            .padding(.top, 10)
+            
+            // 1. Liquid Elastic Tab Bar
+            showcaseCard(
+                title: "1. Liquid Elastic Capsule Tab Bar",
+                badge: "LIQUID SPRING",
+                desc: "Floating glass capsule with an elastic matchedGeometry pill that stretches and slides across items with spring momentum.",
+                badgeColor: .blue
+            ) {
+                VStack(spacing: 12) {
+                    LiquidElasticTabBar(
+                        items: sampleTabs,
+                        selectedTabId: $activeTabId,
+                        accentColor: selectedTabAccentColor
+                    )
+                }
+            }
+            
+            // 2. Curved Notch Hero Tab Bar
+            showcaseCard(
+                title: "2. Curved Notch Center Hero Tab Bar",
+                badge: "CONCAVE NOTCH",
+                desc: "Edge-to-edge curved bottom bar with a central concave valley cradling an elevated hero action button with rotation physics.",
+                badgeColor: .purple
+            ) {
+                VStack(spacing: 14) {
+                    CurvedNotchHeroTabBar(
+                        items: sampleTabs,
+                        selectedTabId: $activeTabId,
+                        heroColor: selectedTabAccentColor
+                    ) {
+                        HapticFeedback.medium()
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
+                            heroButtonAngle += 45
+                            heroActionMessage = "Hero Action Executed! (\(Int(heroButtonAngle))°)"
+                        }
+                    }
+                    
+                    Text(heroActionMessage)
+                        .font(.caption.bold())
+                        .foregroundColor(selectedTabAccentColor)
+                }
+            }
+            
+            // 3. Morphing Glow Line Tab Bar
+            showcaseCard(
+                title: "3. Morphing Illuminated Line Tab Bar",
+                badge: "LASER LINE",
+                desc: "Minimalist navigation featuring a laser-thin sliding neon line indicator with 8pt glow bloom and selectable dock alignment.",
+                badgeColor: .cyan
+            ) {
+                VStack(spacing: 14) {
+                    HStack {
+                        Text("Indicator Position:")
+                            .font(.caption.bold())
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Picker("Line Position", selection: $morphingLinePosition) {
+                            Text("Top Line").tag(MorphingLineTabBar.LinePosition.top)
+                            Text("Bottom Line").tag(MorphingLineTabBar.LinePosition.bottom)
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 190)
+                    }
+                    
+                    MorphingLineTabBar(
+                        items: sampleTabs,
+                        selectedTabId: $activeTabId,
+                        accentColor: selectedTabAccentColor,
+                        linePosition: morphingLinePosition
+                    )
+                }
+            }
+            
+            // 4. Expanding Label Capsule Tab Bar
+            showcaseCard(
+                title: "4. Expanding Label Dynamic Pill Tab Bar",
+                badge: "DYNAMIC PILL",
+                desc: "Inactive items remain compact icon-only badges. The selected tab smoothly expands horizontally with spring physics to reveal its title.",
+                badgeColor: .orange
+            ) {
+                VStack(spacing: 12) {
+                    ExpandingLabelTabBar(
+                        items: sampleTabs,
+                        selectedTabId: $activeTabId,
+                        accentColor: selectedTabAccentColor
+                    )
+                }
+            }
+            
+            // 5. Floating Bubble Water Ripple Tab Bar
+            showcaseCard(
+                title: "5. Floating Bubble Water Ripple Tab Bar",
+                badge: "INDEPENDENT BUBBLES",
+                desc: "Separated spherical glass orbs with radial ambient halos and light spring compression on tap.",
+                badgeColor: .emeraldColor
+            ) {
+                VStack(spacing: 12) {
+                    FloatingBubbleTabBar(
+                        items: sampleTabs,
+                        selectedTabId: $activeTabId,
+                        accentColor: selectedTabAccentColor
+                    )
+                }
+            }
+            
+            // 6. Floating Glass Dock Tab Bar
+            showcaseCard(
+                title: "6. Floating Glass Dock Tab Bar",
+                badge: "MAGNIFYING DOCK",
+                desc: "macOS/iPadOS dock-inspired floating glass bar with magnifying scale physics on selection and active glowing indicator dots.",
+                badgeColor: .indigo
+            ) {
+                VStack(spacing: 12) {
+                    FloatingGlassDockTabBar(
+                        items: sampleTabs,
+                        selectedTabId: $activeTabId,
+                        accentColor: selectedTabAccentColor
+                    )
+                }
+            }
         }
     }
     
-    // MARK: - 2. Transitions Showcase
+    // MARK: - 2. Transitions Showcase (4 Dedicated Elevated Cards)
     
-    private var transitionsShowcase: some View {
+    private var transitionsSection: some View {
         VStack(spacing: 20) {
             headerCard(
                 title: "4 Fluid Navigation Transitions",
-                desc: "Hero cards zoom seamlessly into detail sheets, circular ripple coordinates reveal content, and 3D space rotates."
+                desc: "Spatial navigation paradigms: App Store-style hero expansions, touch-coordinate radial ripple reveals, 3D perspective cube turnovers, and layered receding depth sheets."
             )
             
-            // Hero Card Transition Section
-            VStack(alignment: .leading, spacing: 12) {
-                Text("1. HERO CARD ZOOM (APP STORE STYLE)")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundColor(.secondary)
-                
-                ForEach(sampleHeroCards) { card in
-                    Button {
-                        selectedHeroCard = card
-                    } label: {
-                        HStack(spacing: 16) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: card.gradientColors,
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 54, height: 54)
-                                Image(systemName: card.imageName)
-                                    .font(.title2)
-                                    .foregroundColor(.white)
+            // 1. Hero Card Zoom
+            showcaseCard(
+                title: "1. Hero Card Zoom (App Store Style)",
+                badge: "MATCHED GEOMETRY",
+                desc: "Tap any card below to watch it expand smoothly into an immersive detail view with matched geometry, spring curve, and interactive drag-down dismissal.",
+                badgeColor: .purple
+            ) {
+                VStack(spacing: 12) {
+                    ForEach(sampleHeroCards) { card in
+                        Button {
+                            withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
+                                selectedHeroCard = card
                             }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(card.category.uppercased())
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.blue)
-                                Text(card.title)
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(.primary)
-                                Text(card.subtitle)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
+                        } label: {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: card.gradientColors,
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 52, height: 52)
+                                    Image(systemName: card.imageName)
+                                        .font(.title3)
+                                        .foregroundColor(.white)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(card.category.uppercased())
+                                        .font(.system(size: 9, weight: .bold))
+                                        .foregroundColor(.purple)
+                                    Text(card.title)
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.primary)
+                                    Text(card.subtitle)
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "arrow.up.right.circle.fill")
+                                    .font(.title3)
+                                    .foregroundColor(.purple)
+                            }
+                            .padding(12)
+                            .background(Color.primary.opacity(0.04))
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            
+            // 2. Circular Ripple Reveal
+            showcaseCard(
+                title: "2. Circular Ripple Radial Mask Reveal",
+                badge: "TOUCH VECTOR MASK",
+                desc: "Destination view blossoms radially outward from the exact coordinate of the user's touch vector, calculated using geometric Pythagorean hypotenuse bounds.",
+                badgeColor: .cyan
+            ) {
+                VStack(spacing: 14) {
+                    HStack {
+                        Text("Ripple Palette:")
+                            .font(.caption.bold())
+                            .foregroundColor(.secondary)
+                        
+                        Picker("Palette", selection: $rippleColorIndex) {
+                            Text("Violet Midnight").tag(0)
+                            Text("Cyber Blue").tag(1)
+                            Text("Mint Emerald").tag(2)
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    
+                    Button {
+                        isRipplePresented = true
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "circle.circle.fill")
+                                .font(.title3)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Trigger Circular Ripple Reveal")
+                                    .font(.system(size: 14, weight: .bold))
+                                Text("Tap anywhere on this button to set origin")
+                                    .font(.system(size: 10))
+                                    .opacity(0.8)
                             }
                             Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption.bold())
-                                .foregroundColor(.secondary)
+                            Image(systemName: "sparkles")
                         }
-                        .padding(14)
-                        .background(Color.appSecondarySystemBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(
+                                    LinearGradient(
+                                        colors: rippleGradients[rippleColorIndex].prefix(2).map { $0 },
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                        )
+                        .shadow(color: Color.purple.opacity(0.3), radius: 8, y: 4)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            
-            Divider()
-            
-            // Circular Ripple Reveal
-            VStack(alignment: .leading, spacing: 12) {
-                Text("2. CIRCULAR RIPPLE MASK TRANSITION")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundColor(.secondary)
-                
-                Button {
-                    isRipplePresented = true
-                } label: {
-                    HStack {
-                        Image(systemName: "circle.circle.fill")
-                        Text("Trigger Circular Ripple Reveal")
-                        Spacer()
-                        Image(systemName: "sparkles")
-                    }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.purple))
-                }
-                .buttonStyle(.plain)
-            }
             .circularRipple(isPresented: $isRipplePresented) {
                 ZStack {
                     LinearGradient(
-                        colors: [Color.purple, Color.indigo, Color.black],
+                        colors: rippleGradients[rippleColorIndex],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                     .ignoresSafeArea()
                     
-                    VStack(spacing: 16) {
+                    VStack(spacing: 18) {
                         Image(systemName: "sparkle.magnifyingglass")
-                            .font(.system(size: 54))
+                            .font(.system(size: 56))
                             .foregroundColor(.white)
-                        Text("Circular Ripple Detail")
-                            .font(.title.bold())
+                        
+                        Text("Circular Ripple Radial Reveal")
+                            .font(.title2.bold())
                             .foregroundColor(.white)
-                        Text("Mask expanded from exact tap coordinate.")
+                        
+                        Text("Clip mask calculated dynamically from your touch vector coordinates.")
                             .font(.subheadline)
                             .foregroundColor(.white.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 30)
                         
-                        Button("Dismiss Transition") {
+                        Button {
                             isRipplePresented = false
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "xmark.circle.fill")
+                                Text("Dismiss Transition")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.black)
+                            .padding(.horizontal, 28)
+                            .padding(.vertical, 12)
+                            .background(Capsule().fill(Color.white))
                         }
-                        .font(.headline)
-                        .foregroundColor(.purple)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Capsule().fill(Color.white))
-                        .padding(.top, 20)
+                        .buttonStyle(.plain)
+                        .padding(.top, 16)
                     }
                     .padding()
                 }
             }
             
-            Divider()
-            
-            // Spatial 3D Cube Turnover
-            VStack(alignment: .leading, spacing: 12) {
-                Text("3. SPATIAL 3D CUBE TURNOVER")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundColor(.secondary)
-                
-                Spatial3DCubeTransitionView(
-                    isRotatedToB: $isCubeFlipped,
-                    viewA: {
-                        cubeFace(title: "Front View Interface", color: .blue, icon: "1.circle.fill")
-                    },
-                    viewB: {
-                        cubeFace(title: "Reverse View Interface", color: .orange, icon: "2.circle.fill")
+            // 3. Spatial 3D Cube Turnover
+            showcaseCard(
+                title: "3. Spatial 3D Cube Turnover",
+                badge: "3D PERSPECTIVE",
+                desc: "Flips views around a 3D Y-axis anchor point with 0.7 perspective depth factor, simulating a rotating solid cube interface.",
+                badgeColor: .orange
+            ) {
+                VStack(spacing: 14) {
+                    Spatial3DCubeTransitionView(
+                        isRotatedToB: $isCubeFlipped,
+                        viewA: {
+                            cubeFace(title: "Front View: Operational Dashboard", color: .blue, icon: "chart.line.uptrend.xyaxis")
+                        },
+                        viewB: {
+                            cubeFace(title: "Reverse View: System Telemetry", color: .orange, icon: "cpu.fill")
+                        }
+                    )
+                    .frame(height: 150)
+                    
+                    HStack(spacing: 12) {
+                        Button {
+                            withAnimation(.spring(response: 0.45, dampingFraction: 0.72)) {
+                                isCubeFlipped.toggle()
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                Text(isCubeFlipped ? "Flip Back to Front Face" : "Rotate 3D Cube Perspective")
+                            }
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(isCubeFlipped ? Color.orange : Color.blue))
+                        }
+                        .buttonStyle(.plain)
                     }
-                )
-                .frame(height: 140)
-                
-                Button {
-                    isCubeFlipped.toggle()
-                } label: {
-                    HStack {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                        Text(isCubeFlipped ? "Flip Back to Front Face" : "Rotate 3D Cube Perspective")
-                    }
-                    .font(.system(size: 14, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
                 }
-                .buttonStyle(.plain)
             }
             
-            Divider()
-            
-            // Sheet Stack Presentation
-            VStack(alignment: .leading, spacing: 12) {
-                Text("4. STACKED DEPTH SHEET PRESENTATION")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundColor(.secondary)
-                
-                Button {
-                    isSheetStackPresented = true
-                } label: {
-                    HStack {
-                        Image(systemName: "rectangle.stack.fill")
-                        Text("Present Depth Sheet Stack")
-                        Spacer()
-                        Image(systemName: "arrow.up.circle.fill")
+            // 4. Stacked Depth Sheet Presentation
+            showcaseCard(
+                title: "4. Stacked Depth Sheet Presentation",
+                badge: "LAYERED RECEDING",
+                desc: "Presenting view recedes into the background to 0.92x scale with 24pt corner radius morph and 35% ambient dimming while child sheet slides upward with interactive drag dismissal.",
+                badgeColor: .emeraldColor
+            ) {
+                VStack(spacing: 14) {
+                    Button {
+                        isSheetStackPresented = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "rectangle.stack.fill")
+                                .font(.title3)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Present Stacked Depth Sheet")
+                                    .font(.system(size: 14, weight: .bold))
+                                Text("Inspect background recessing & gesture physics")
+                                    .font(.system(size: 10))
+                                    .opacity(0.8)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.title3)
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color.emeraldColor)
+                        )
+                        .shadow(color: Color.emeraldColor.opacity(0.3), radius: 8, y: 4)
                     }
-                    .font(.system(size: 15, weight: .semibold))
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.blue.opacity(0.15)))
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
         .fullScreenCover(isPresented: $isSheetStackPresented) {
@@ -403,28 +632,69 @@ public struct ShowcaseGalleryView: View {
                 isSheetPresented: $isSheetStackPresented,
                 backgroundContent: {
                     ZStack {
-                        Color.indigo.ignoresSafeArea()
-                        VStack(spacing: 12) {
+                        LinearGradient(
+                            colors: [Color.indigo, Color.purple, Color.black],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .ignoresSafeArea()
+                        
+                        VStack(spacing: 14) {
+                            Image(systemName: "rectangle.stack.badge.person.crop")
+                                .font(.system(size: 52))
+                                .foregroundColor(.white)
                             Text("Parent Background View")
                                 .font(.title2.bold())
                                 .foregroundColor(.white)
-                            Text("Scales back to 0.92x with rounded corners when sheet opens.")
+                            Text("Recedes to 0.92x scale with 24pt corner radius and 35% dimming layer.")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 30)
                         }
                     }
                 },
                 sheetContent: {
                     VStack(spacing: 20) {
-                        Capsule().fill(Color.gray.opacity(0.4)).frame(width: 40, height: 5).padding(.top, 12)
-                        Text("Progressive Depth Sheet").font(.headline)
-                        Text("Drag down or tap background to dismiss.")
-                            .font(.caption).foregroundColor(.secondary)
-                        Spacer()
-                        Button("Dismiss Sheet") {
-                            isSheetStackPresented = false
+                        Capsule()
+                            .fill(Color.gray.opacity(0.4))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 14)
+                        
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Progressive Depth Sheet")
+                                    .font(.title3.bold())
+                                Text("Interactive downward drag with spring snapping")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button {
+                                isSheetStackPresented = false
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.secondary)
+                            }
                         }
-                        .padding()
+                        .padding(.horizontal)
+                        
+                        Divider()
+                        
+                        VStack(spacing: 12) {
+                            HStack {
+                                Image(systemName: "hand.draw.fill")
+                                    .foregroundColor(.blue)
+                                Text("Swipe down from anywhere on the card to dismiss.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                            }
+                            .padding(.horizontal)
+                        }
+                        
+                        Spacer()
                     }
                 }
             )
@@ -436,29 +706,31 @@ public struct ShowcaseGalleryView: View {
             RoundedRectangle(cornerRadius: 18)
                 .fill(
                     LinearGradient(
-                        colors: [color, color.opacity(0.7)],
+                        colors: [color, color.opacity(0.75)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
             
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.system(size: 28))
+                    .font(.system(size: 32))
                 Text(title)
-                    .font(.headline)
+                    .font(.headline.bold())
+                    .multilineTextAlignment(.center)
             }
             .foregroundColor(.white)
+            .padding()
         }
     }
     
-    // MARK: - 3. Controls Showcase (20 Components)
+    // MARK: - 3. Controls Showcase (24 Controls, Sheet removed)
     
-    private var controlsShowcase: some View {
+    private var controlsSection: some View {
         VStack(spacing: 20) {
             headerCard(
-                title: "20 Custom UI Controls & Micro-Interactions",
-                desc: "Tactile feedback, physical spring resistance, continuous light sweeps, and gyroscopic 3D cards."
+                title: "24 Custom UI Controls & Micro-Interactions",
+                desc: "Tactile haptic feedback, physical spring resistance, continuous light sweeps, magnetic touch tracking, and gyroscopic 3D cards."
             )
             
             // Sub-category Navigation
@@ -502,20 +774,18 @@ public struct ShowcaseGalleryView: View {
                     switchesGroup
                 case .pickers:
                     pickersGroup
-                case .drawer:
-                    drawerGroup
                 }
             }
         }
     }
     
-    // MARK: Sub-Groups
+    // MARK: - Buttons Subgroup (9 Components)
     
     private var buttonsGroup: some View {
         VStack(spacing: 16) {
             // 1. Slide To Confirm
-            controlCard(
-                title: "Slide to Confirm / Unlock",
+            showcaseCard(
+                title: "1. Slide to Confirm / Unlock",
                 badge: "GESTURE ACTION",
                 desc: "Swipe the circular thumb across the track. Springs back if cancelled, locks with haptics when reaching 85%+ threshold.",
                 badgeColor: .blue
@@ -547,8 +817,8 @@ public struct ShowcaseGalleryView: View {
             }
             
             // 2. Morphing State Button
-            controlCard(
-                title: "Morphing State Button",
+            showcaseCard(
+                title: "2. Morphing State Button",
                 badge: "STATE MACHINE",
                 desc: "Smoothly transitions between Idle, Loading spinner, Success checkmark bounce, and Error shake states.",
                 badgeColor: .purple
@@ -600,8 +870,8 @@ public struct ShowcaseGalleryView: View {
             }
             
             // 3. Neon Orbiting Border Button
-            controlCard(
-                title: "Neon Orbiting Border Button",
+            showcaseCard(
+                title: "3. Neon Orbiting Border Button",
                 badge: "CYBERPUNK",
                 desc: "Traveling angular LED perimeter light trail with dark frosted glass core and neon glow blur.",
                 badgeColor: .cyan
@@ -615,9 +885,49 @@ public struct ShowcaseGalleryView: View {
                 }
             }
             
-            // 4. Liquid Hold to Confirm
-            controlCard(
-                title: "Hold 1.2s Liquid Fill Button",
+            // 4. Magnetic Spring Press (NEW)
+            showcaseCard(
+                title: "4. Magnetic Spring Press Button",
+                badge: "MAGNETIC DRAG",
+                desc: "Magnetically attracts and follows finger drag displacement with spring resistance, snapping back with tactile click upon release.",
+                badgeColor: .indigo
+            ) {
+                VStack(spacing: 10) {
+                    MagneticSpringButton(
+                        title: "Magnetic Fluid Press (\(magneticPressCount))",
+                        icon: "cursorarrow.rays",
+                        accentColor: .indigo
+                    ) {
+                        magneticPressCount += 1
+                    }
+                    
+                    Text("Drag in any direction to feel physical spring tension")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            // 5. Glassmorphic Glow Button (NEW)
+            showcaseCard(
+                title: "5. Glassmorphic Glow Button",
+                badge: "NEON REFRACTION",
+                desc: "Frosted glass pill button with dual continuous neon gradient borders, glowing specular highlights, and spring press depression.",
+                badgeColor: .pink
+            ) {
+                VStack(spacing: 10) {
+                    GlassmorphicGlowButton(
+                        title: "Launch Hyperdrive (\(glowTapCount))",
+                        icon: "paperplane.fill",
+                        glowColors: [Color.purple, Color.cyan]
+                    ) {
+                        glowTapCount += 1
+                    }
+                }
+            }
+            
+            // 6. Liquid Hold to Confirm
+            showcaseCard(
+                title: "6. Hold 1.2s Liquid Fill Button",
                 badge: "PRESSURE HOLD",
                 desc: "Requires continuous finger pressure. Liquid wave rises upward with haptic burst upon 100% completion.",
                 badgeColor: .green
@@ -629,27 +939,25 @@ public struct ShowcaseGalleryView: View {
                 ) {}
             }
             
-            // 5. Particle Confetti Burst
-            controlCard(
-                title: "Confetti Particle Burst",
+            // 7. Particle Confetti Burst
+            showcaseCard(
+                title: "7. Confetti Particle Burst Button",
                 badge: "CELEBRATION",
                 desc: "Fires 8 radial confetti physics particles exploding outward with random velocities and spring fade.",
                 badgeColor: .pink
             ) {
-                VStack(spacing: 8) {
-                    ParticleBurstButton(
-                        title: "Celebrate Milestone (\(burstCount))",
-                        icon: "sparkles",
-                        tintColor: .pink
-                    ) {
-                        burstCount += 1
-                    }
+                ParticleBurstButton(
+                    title: "Celebrate Milestone (\(burstCount))",
+                    icon: "sparkles",
+                    tintColor: .pink
+                ) {
+                    burstCount += 1
                 }
             }
             
-            // 6. Shimmer Sweep
-            controlCard(
-                title: "Continuous Shimmer Pulse",
+            // 8. Continuous Shimmer Pulse
+            showcaseCard(
+                title: "8. Continuous Shimmer Pulse Button",
                 badge: "LIGHT SWEEP",
                 desc: "Diagonal 45° light ray passing across button face with tactile compression on tap.",
                 badgeColor: .indigo
@@ -657,9 +965,9 @@ public struct ShowcaseGalleryView: View {
                 ShimmerPulseButton(title: "Explore Premium Features", icon: "crown.fill") {}
             }
             
-            // 7. Tactile 3D Physical Push
-            controlCard(
-                title: "Tactile 3D Physical Push",
+            // 9. Tactile 3D Physical Push
+            showcaseCard(
+                title: "9. Tactile 3D Physical Push Button",
                 badge: "PHYSICS BEVEL",
                 desc: "Simulates an authentic mechanical keyboard keycap with 6pt bottom bevel depth and shadow depression.",
                 badgeColor: .orange
@@ -669,11 +977,13 @@ public struct ShowcaseGalleryView: View {
         }
     }
     
+    // MARK: - Sliders Subgroup (5 Components)
+    
     private var slidersGroup: some View {
         VStack(spacing: 16) {
             // 1. Circular Dial Slider
-            controlCard(
-                title: "Circular Rotary Dial Slider",
+            showcaseCard(
+                title: "1. Circular Rotary Dial Slider",
                 badge: "ROTARY KNOB",
                 desc: "260° circular progress arc with touch vector angle calculation, haptic clicks, and central readout.",
                 badgeColor: .orange
@@ -689,9 +999,41 @@ public struct ShowcaseGalleryView: View {
                 .padding(.vertical, 8)
             }
             
-            // 2. Waveform Audio Scrubber
-            controlCard(
-                title: "Interactive Waveform Scrubber",
+            // 2. Vertical Capsule Volume Slider (NEW)
+            showcaseCard(
+                title: "2. Vertical Capsule Volume Slider",
+                badge: "CONTROL CENTER",
+                desc: "iOS Control Center-style vertical capsule slider with tactile vertical drag physics, morphing audio symbols, and percentage readout.",
+                badgeColor: .blue
+            ) {
+                VStack(spacing: 12) {
+                    HStack(spacing: 30) {
+                        VerticalCapsuleVolumeSlider(
+                            value: $verticalVolumeValue,
+                            accentColor: .blue,
+                            height: 150,
+                            width: 64
+                        )
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Volume Output")
+                                .font(.headline.bold())
+                            Text("\(Int(verticalVolumeValue))% Active Level")
+                                .font(.subheadline)
+                                .foregroundColor(.blue)
+                            Text("Drag vertically inside capsule to test smooth audio symbol morphing.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10)
+                }
+            }
+            
+            // 3. Waveform Audio Scrubber
+            showcaseCard(
+                title: "3. Interactive Waveform Audio Scrubber",
                 badge: "AUDIO TIMELINE",
                 desc: "24 dynamic amplitude bars with drag scrubber head, played progress highlight, and timestamp readout.",
                 badgeColor: .purple
@@ -705,9 +1047,9 @@ public struct ShowcaseGalleryView: View {
                 .padding(.vertical, 4)
             }
             
-            // 3. Elastic Bubble Slider
-            controlCard(
-                title: "Elastic Bubble Tooltip Slider",
+            // 4. Elastic Bubble Tooltip Slider
+            showcaseCard(
+                title: "4. Elastic Bubble Tooltip Slider",
                 badge: "SPRING STRETCH",
                 desc: "Speech bubble tooltip wobbles and stretches dynamically based on user drag speed.",
                 badgeColor: .blue
@@ -727,9 +1069,9 @@ public struct ShowcaseGalleryView: View {
                 .padding(.horizontal, 6)
             }
             
-            // 4. Stepped Haptic Tick Slider
-            controlCard(
-                title: "Stepped Haptic Tick Slider",
+            // 5. Stepped Haptic Tick Slider
+            showcaseCard(
+                title: "5. Stepped Haptic Tick Slider",
                 badge: "MAGNETIC NOTCHES",
                 desc: "Discrete notched step positions with tactile magnetic snapping on each division.",
                 badgeColor: .teal
@@ -751,11 +1093,13 @@ public struct ShowcaseGalleryView: View {
         }
     }
     
+    // MARK: - Switches Subgroup (5 Components)
+    
     private var switchesGroup: some View {
         VStack(spacing: 16) {
             // 1. Day / Night Celestial
-            controlCard(
-                title: "Celestial Day & Night Switch",
+            showcaseCard(
+                title: "1. Celestial Day & Night Switch",
                 badge: "PHOTOREALISTIC",
                 desc: "Rotating Sun with radiating solar beams morphs into a cratered Moon across a starry midnight sky.",
                 badgeColor: .indigo
@@ -772,9 +1116,33 @@ public struct ShowcaseGalleryView: View {
                 }
             }
             
-            // 2. Padlock Security Switch
-            controlCard(
-                title: "Security Padlock Switch",
+            // 2. Minimal Segment Toggle Switch (NEW)
+            showcaseCard(
+                title: "2. Minimal Segment Toggle Switch",
+                badge: "MAGNETIC DUAL-ICON",
+                desc: "Clean minimalist capsule switch with dual SF Symbol icons and a smooth sliding thumb pill with tactile magnetic snap.",
+                badgeColor: .blue
+            ) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(isMuteSwitchOn ? "Alerts Silenced" : "Alerts Active")
+                            .font(.subheadline.bold())
+                        Text(isMuteSwitchOn ? "Do not disturb enabled" : "Ring on incoming messages")
+                            .font(.caption).foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    MinimalSegmentToggleSwitch(
+                        isOn: $isMuteSwitchOn,
+                        onIcon: "bell.fill",
+                        offIcon: "bell.slash.fill",
+                        onColor: .blue
+                    )
+                }
+            }
+            
+            // 3. Padlock Security Switch
+            showcaseCard(
+                title: "3. Security Padlock Switch",
                 badge: "BIOMETRIC LOCK",
                 desc: "Physical shackle springs upward to unlock with status label and encrypted tactile sensation.",
                 badgeColor: .emeraldColor
@@ -791,9 +1159,9 @@ public struct ShowcaseGalleryView: View {
                 }
             }
             
-            // 3. Glow Toggle Tube Switch
-            controlCard(
-                title: "Neon Glow Tube Toggle",
+            // 4. Glow Toggle Tube Switch
+            showcaseCard(
+                title: "4. Neon Glow Tube Toggle",
                 badge: "ILLUMINATED",
                 desc: "Floating neon power thumb gliding over a frosted glass illuminated track.",
                 badgeColor: .green
@@ -810,9 +1178,9 @@ public struct ShowcaseGalleryView: View {
                 }
             }
             
-            // 4. Liquid Stretch Switch
-            controlCard(
-                title: "Viscous Liquid Stretch Switch",
+            // 5. Liquid Stretch Switch
+            showcaseCard(
+                title: "5. Viscous Liquid Stretch Switch",
                 badge: "FLUID ELASTIC",
                 desc: "Thumb physically elongates and stretches along the drag direction before snapping into position.",
                 badgeColor: .purple
@@ -831,11 +1199,39 @@ public struct ShowcaseGalleryView: View {
         }
     }
     
+    // MARK: - Pickers Subgroup (5 Components)
+    
     private var pickersGroup: some View {
         VStack(spacing: 16) {
-            // 1. Interactive 3D Tilt Card
-            controlCard(
-                title: "3D Perspective Interactive Tilt Card",
+            // 1. Color Palette Swatch Token Picker (NEW)
+            showcaseCard(
+                title: "1. Color Palette Swatch Token Picker",
+                badge: "HALO EXPAND",
+                desc: "Design token color picker with expanding circular halo rings, tactile spring checkmarks, and hex code readouts.",
+                badgeColor: .purple
+            ) {
+                VStack(alignment: .leading, spacing: 12) {
+                    ColorPaletteSwatchPicker(
+                        swatches: sampleColorSwatches,
+                        selectedId: $selectedColorSwatchId
+                    )
+                    
+                    if let activeSwatch = sampleColorSwatches.first(where: { $0.id == selectedColorSwatchId }) {
+                        HStack {
+                            Text("Token: \(activeSwatch.name)")
+                                .font(.caption.bold())
+                            Spacer()
+                            Text(activeSwatch.hexCode)
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            
+            // 2. Interactive 3D Tilt Card
+            showcaseCard(
+                title: "2. 3D Perspective Interactive Tilt Card",
                 badge: "GYROSCOPIC TOUCH",
                 desc: "Drag your finger over the card. Rotates in true 3D space with specular glare light reflection matching your touch vector.",
                 badgeColor: .indigo
@@ -881,9 +1277,9 @@ public struct ShowcaseGalleryView: View {
                 .frame(height: 170)
             }
             
-            // 2. Liquid Segmented Picker
-            controlCard(
-                title: "Liquid Glass Segmented Picker",
+            // 3. Liquid Segmented Picker
+            showcaseCard(
+                title: "3. Liquid Glass Segmented Picker",
                 badge: "MATCHED GEOMETRY",
                 desc: "Sliding matchedGeometryEffect capsule dock with spring bounce and active glow shadow.",
                 badgeColor: .blue
@@ -901,9 +1297,9 @@ public struct ShowcaseGalleryView: View {
                 }
             }
             
-            // 3. Haptic Elastic Stepper
-            controlCard(
-                title: "Haptic Elastic Number Stepper",
+            // 4. Haptic Elastic Stepper
+            showcaseCard(
+                title: "4. Haptic Elastic Number Stepper",
                 badge: "SPRING BOUNCE",
                 desc: "Animated numeric counter whose badge bounces and scales with tactile clicks on tap.",
                 badgeColor: .orange
@@ -924,9 +1320,9 @@ public struct ShowcaseGalleryView: View {
                 }
             }
             
-            // 4. Tag Cloud Chip Filter
-            controlCard(
-                title: "Multi-Select Tag Cloud Filter",
+            // 5. Tag Cloud Chip Filter
+            showcaseCard(
+                title: "5. Multi-Select Tag Cloud Filter",
                 badge: "CHIP SELECTOR",
                 desc: "Interactive filter tags with selection checkmarks, spring scale, and multi-selection state.",
                 badgeColor: .pink
@@ -946,128 +1342,148 @@ public struct ShowcaseGalleryView: View {
         }
     }
     
-    private var drawerGroup: some View {
-        VStack(spacing: 16) {
-            controlCard(
-                title: "Multi-Detent Custom Bottom Sheet",
-                badge: "DRAGGABLE DRAWER",
-                desc: "Smooth velocity tracking, background dimming, and snapping detents (.collapsed, .half, .full).",
-                badgeColor: .blue
-            ) {
-                VStack(spacing: 14) {
-                    HStack(spacing: 8) {
-                        ForEach([SheetDetent.collapsed, SheetDetent.half, SheetDetent.full], id: \.self) { det in
-                            Button {
-                                withAnimation(.spring(response: 0.38, dampingFraction: 0.75)) {
-                                    sheetDetent = det
-                                }
-                            } label: {
-                                Text(det == .collapsed ? "Collapsed" : det == .half ? "Half (50%)" : "Full (88%)")
-                                    .font(.caption.bold())
-                                    .foregroundColor(sheetDetent == det ? .white : .primary)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Capsule().fill(sheetDetent == det ? Color.blue : Color.primary.opacity(0.06))
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    
-                    Button {
-                        isCustomSheetOpen = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "arrow.up.circle.fill")
-                            Text("Present Live Interactive Bottom Sheet")
-                        }
-                        .font(.subheadline.bold())
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.blue))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .fullScreenCover(isPresented: $isCustomSheetOpen) {
-            ZStack {
-                Color.black.opacity(0.4).ignoresSafeArea()
-                    .onTapGesture {
-                        isCustomSheetOpen = false
-                    }
-                
-                CustomBottomSheet(currentDetent: $sheetDetent) {
-                    VStack(spacing: 16) {
-                        Capsule().fill(Color.gray.opacity(0.4)).frame(width: 40, height: 5).padding(.top, 10)
-                        
-                        Text("Custom Bottom Sheet")
-                            .font(.headline)
-                        
-                        Text("Currently at \(sheetDetent == .collapsed ? "Collapsed" : sheetDetent == .half ? "Half Screen" : "Full Screen") position.")
-                            .font(.caption).foregroundColor(.secondary)
-                        
-                        Divider()
-                        
-                        HStack {
-                            Text("Flick down quickly to dismiss or drag handle.")
-                                .font(.caption).foregroundColor(.secondary)
-                            Spacer()
-                            Button("Close") {
-                                isCustomSheetOpen = false
-                            }
-                            .font(.caption.bold())
-                        }
-                        .padding(.horizontal)
-                        
-                        Spacer()
-                    }
-                }
-            }
-        }
-    }
+    // MARK: - 4. Backgrounds Showcase (Studio & 4 Shaders)
     
-    // MARK: - 4. Backgrounds Showcase
-    
-    private var backgroundsShowcase: some View {
+    private var backgroundsSection: some View {
         VStack(spacing: 20) {
             headerCard(
-                title: "3 Live Animated Backgrounds",
-                desc: "High-performance procedural backgrounds: fluid chromatic aurora, drifting soft bokeh orbs, and 60fps canvas starfield."
+                title: "4 Live Procedural Backgrounds",
+                desc: "High-performance GPU-accelerated backgrounds: chromatic fluid aurora, drifting soft bokeh orbs, 60fps canvas starfield, and perspective synthwave cyber grid."
             )
             
-            Picker("Background", selection: $selectedBackground) {
-                Text("Aurora Mesh").tag(0)
-                Text("Bokeh Orbs").tag(1)
-                Text("Starfield").tag(2)
+            // Background Studio Controller Card
+            showcaseCard(
+                title: "Background Studio & Shader Controller",
+                badge: "GPU CANVAS",
+                desc: "Switch between procedural shaders and adjust animation speed parameters live.",
+                badgeColor: .purple
+            ) {
+                VStack(spacing: 16) {
+                    Picker("Background", selection: $selectedBackground) {
+                        Text("Aurora").tag(0)
+                        Text("Bokeh").tag(1)
+                        Text("Starfield").tag(2)
+                        Text("Cyber Grid").tag(3)
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Motion Velocity Speed")
+                                .font(.caption.bold())
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text(String(format: "%.1fx Speed", backgroundAnimationSpeed))
+                                .font(.caption.bold())
+                                .foregroundColor(.purple)
+                        }
+                        
+                        Slider(value: $backgroundAnimationSpeed, in: 0.5...2.5, step: 0.1)
+                            .tint(.purple)
+                    }
+                }
             }
-            .pickerStyle(.segmented)
             
-            // Foreground Card
-            VStack(spacing: 14) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 32))
-                    .foregroundColor(.white)
+            // Live Frosted Glass Preview Card (Demonstrates real UI layered over procedural background)
+            VStack(spacing: 16) {
+                HStack {
+                    Image(systemName: "sparkles")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Layered Glass Contrast Test")
+                            .font(.headline.bold())
+                            .foregroundColor(.white)
+                        Text("Frosted ultra-thin material resting over live shaders")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    Spacer()
+                }
                 
-                Text("Procedural Canvas Running")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                Text("These background shaders and physics particles render at 60 FPS while keeping CPU usage minimal.")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
+                HStack(spacing: 12) {
+                    Button("Action Button") {}
+                        .font(.caption.bold())
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.purple))
+                    
+                    Text("60 FPS Smooth")
+                        .font(.caption.bold())
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.white.opacity(0.2)))
+                    
+                    Spacer()
+                }
             }
-            .padding(24)
+            .padding(18)
             .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
             )
-            .padding(.top, 40)
+            .shadow(color: Color.black.opacity(0.15), radius: 10, y: 5)
+            
+            // 4 Algorithm Information Cards
+            showcaseCard(
+                title: "1. Multilayer Harmonic Aurora Mesh",
+                badge: "RADIAL GRADIENTS",
+                desc: "Three harmonic circular color centers pulsating along dynamic trigonometric orbits with 50pt Gaussian blur.",
+                badgeColor: .purple
+            ) {
+                HStack {
+                    Text("Orbits: 3 Sine/Cosine Centers • Blur: 50pt • Blend: Screen")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+            }
+            
+            showcaseCard(
+                title: "2. Physics-Based Drifting Bokeh Orbs",
+                badge: "FLOATING PARTICLES",
+                desc: "Serene multi-radius chromatic orbs gently floating across screen bounds with soft blur diffusion.",
+                badgeColor: .blue
+            ) {
+                HStack {
+                    Text("Orbs: 4 Primary Nodes • Radius: 130-180pt • Drift: 30pt amplitude")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+            }
+            
+            showcaseCard(
+                title: "3. 60 FPS Canvas Starfield Particles",
+                badge: "GPU CANVAS",
+                desc: "High-density particle dust system rendered on a hardware-accelerated Canvas with sinusoidal twinkling brightness.",
+                badgeColor: .cyan
+            ) {
+                HStack {
+                    Text("Stars: 50 Nodes • Twinkle: 2.0 rad/s • Render: SwiftUI Canvas")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+            }
+            
+            showcaseCard(
+                title: "4. Perspective Synthwave Cyber Grid",
+                badge: "RETRO PERSPECTIVE",
+                desc: "Vanishing point raycasting with horizontal logarithmic scanning lines and horizon bloom glow.",
+                badgeColor: .pink
+            ) {
+                HStack {
+                    Text("Horizon: 45% screen • Rays: 14 lines • Step Factor: 1.35x exponential")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+            }
         }
     }
     
@@ -1080,6 +1496,8 @@ public struct ShowcaseGalleryView: View {
             FloatingBokehOrbsView()
         case 2:
             StarfieldParticlesView()
+        case 3:
+            CyberGridMatrixView(speed: backgroundAnimationSpeed)
         default:
             EmptyView()
         }
@@ -1103,7 +1521,7 @@ public struct ShowcaseGalleryView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
     
-    private func controlCard<Content: View>(
+    private func showcaseCard<Content: View>(
         title: String,
         badge: String,
         desc: String,

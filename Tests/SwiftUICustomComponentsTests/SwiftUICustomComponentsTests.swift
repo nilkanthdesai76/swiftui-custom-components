@@ -66,4 +66,11 @@ final class SwiftUICustomComponentsTests: XCTestCase {
         HapticFeedback.warning()
         HapticFeedback.error()
     }
+    
+    func testColorSwatchItemModel() {
+        let swatch = ColorSwatchItem(id: "blue", name: "Electric Blue", color: .blue, hexCode: "#007AFF")
+        XCTAssertEqual(swatch.id, "blue")
+        XCTAssertEqual(swatch.name, "Electric Blue")
+        XCTAssertEqual(swatch.hexCode, "#007AFF")
+    }
 }
