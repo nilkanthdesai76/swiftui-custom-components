@@ -31,6 +31,31 @@ final class SwiftUICustomComponentsTests: XCTestCase {
         XCTAssertEqual(SheetDetent.full.rawValue, 680)
     }
     
+    func testButtonActionState() {
+        let idle = ButtonActionState.idle
+        let loading = ButtonActionState.loading
+        let success = ButtonActionState.success
+        let error = ButtonActionState.error
+        
+        XCTAssertNotEqual(idle, loading)
+        XCTAssertNotEqual(loading, success)
+        XCTAssertNotEqual(success, error)
+    }
+    
+    func testSegmentItemModel() {
+        let item = SegmentItem(id: "weekly", title: "Weekly", icon: "flame.fill")
+        XCTAssertEqual(item.id, "weekly")
+        XCTAssertEqual(item.title, "Weekly")
+        XCTAssertEqual(item.icon, "flame.fill")
+    }
+    
+    func testTagItemModel() {
+        let tag = TagItem(id: "swiftui", name: "SwiftUI", icon: "swift")
+        XCTAssertEqual(tag.id, "swiftui")
+        XCTAssertEqual(tag.name, "SwiftUI")
+        XCTAssertEqual(tag.icon, "swift")
+    }
+    
     func testHapticFeedbackExecution() {
         // Ensure haptics execute cleanly without crashing on test environment
         HapticFeedback.selection()

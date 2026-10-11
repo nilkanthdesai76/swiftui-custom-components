@@ -94,6 +94,19 @@ public struct CircularRippleTransitionView<Content: View, Destination: View>: Vi
     }
 }
 
+extension View {
+    public func circularRipple<Destination: View>(
+        isPresented: Binding<Bool>,
+        @ViewBuilder destination: @escaping () -> Destination
+    ) -> some View {
+        CircularRippleTransitionView(
+            isPresented: isPresented,
+            content: { self },
+            destination: destination
+        )
+    }
+}
+
 #Preview {
     CircularRippleTransitionView(
         isPresented: .constant(false),

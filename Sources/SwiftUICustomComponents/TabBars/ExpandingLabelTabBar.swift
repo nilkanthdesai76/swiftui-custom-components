@@ -16,6 +16,16 @@ public struct ExpandingLabelTabBar: View {
         self.accentColor = accentColor
     }
     
+    public init(
+        items: [TabBarItem],
+        selectedId: Binding<String>,
+        accentColor: Color = .purple
+    ) {
+        self.items = items
+        self._selectedTabId = selectedId
+        self.accentColor = accentColor
+    }
+    
     public var body: some View {
         HStack(spacing: 8) {
             ForEach(items) { item in

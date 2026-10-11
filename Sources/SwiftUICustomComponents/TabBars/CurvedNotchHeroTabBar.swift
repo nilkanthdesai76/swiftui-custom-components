@@ -69,6 +69,22 @@ public struct CurvedNotchHeroTabBar: View {
         self.onHeroAction = onHeroAction
     }
     
+    public init(
+        items: [TabBarItem],
+        selectedTabId: Binding<String>,
+        heroIcon: String = "plus",
+        heroColor: Color = .blue,
+        onHeroAction: @escaping () -> Void = {}
+    ) {
+        let mid = items.count / 2
+        self.leftItems = Array(items.prefix(mid))
+        self.rightItems = Array(items.suffix(items.count - mid))
+        self._selectedTabId = selectedTabId
+        self.heroIcon = heroIcon
+        self.heroColor = heroColor
+        self.onHeroAction = onHeroAction
+    }
+    
     public var body: some View {
         ZStack(alignment: .top) {
             // Background Curved Dock

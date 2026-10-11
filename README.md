@@ -26,17 +26,36 @@ SwiftUICustomComponents
 │   ├── Spatial3DCubeTransition   — 3D perspective cube rotation
 │   └── SheetStackTransition      — Multi-layer card depth scaling
 │
-├── 🎛️ Custom Controls & Micro-Interactions (10 Components)
-│   ├── CustomBottomSheet         — Snapping multi-detent sheet with flick gesture
-│   ├── ShimmerPulseButton        — 45° continuous light sweep button
-│   ├── LiquidFillProgressButton  — Hold-to-confirm rising wave fill (1.2s)
-│   ├── ParticleBurstButton       — Radial confetti particle burst
-│   ├── Tactile3DButton           — Realistic 3D bevel depth depression
-│   ├── ElasticBubbleSlider       — Dynamic velocity-stretched tooltip slider
-│   ├── SteppedHapticTickSlider   — Discrete notched slider with tick haptics
-│   ├── DayNightThemeSwitch       — Celestial rotating Sun & Cratered Moon switch
-│   ├── LockUnlockSwitch          — Animated shackle security padlock toggle
-│   └── LiquidStretchSwitch       — Viscous fluid stretching thumb toggle
+├── 🎛️ Custom Controls & Micro-Interactions (20 Components)
+│   ├── 🔘 Buttons & Gestures (7)
+│   │   ├── SlideToConfirmControl     — Swipe-to-unlock capsule with 85% latch & spring cancel
+│   │   ├── MorphingStateButton       — Idle ➔ Loading spinner ➔ Success checkmark ➔ Error shake
+│   │   ├── NeonBorderPulseButton     — Orbiting angular LED light beam perimeter
+│   │   ├── LiquidFillProgressButton  — Hold-to-confirm rising wave fill (1.2s)
+│   │   ├── ParticleBurstButton       — Radial confetti particle burst
+│   │   ├── ShimmerPulseButton        — 45° continuous light sweep button
+│   │   └── Tactile3DButton           — Realistic 3D bevel depth keycap depression
+│   │
+│   ├── 🎚️ Sliders & Dials (4)
+│   │   ├── CircularDialSlider        — 260° rotary progress arc with center readout
+│   │   ├── WaveformAudioScrubber     — Interactive 24-bar audio scrubber with timestamps
+│   │   ├── ElasticBubbleSlider       — Dynamic velocity-stretched tooltip slider
+│   │   └── SteppedHapticTickSlider   — Discrete notched slider with tactile ticks
+│   │
+│   ├── 🔘 Switches & Toggles (4)
+│   │   ├── DayNightThemeSwitch       — Celestial rotating Sun & Cratered Moon switch
+│   │   ├── LockUnlockSwitch          — Animated shackle security padlock toggle
+│   │   ├── GlowToggleSwitch          — Neon illuminated tube toggle with power thumb
+│   │   └── LiquidStretchSwitch       — Viscous fluid stretching thumb toggle
+│   │
+│   ├── 🎛️ Pickers, Steppers & 3D Cards (4)
+│   │   ├── InteractiveTiltCard       — Gyroscopic 3D perspective card with specular glare
+│   │   ├── LiquidSegmentedPicker     — Sliding matchedGeometryEffect capsule dock
+│   │   ├── HapticElasticStepper      — Bouncy counter with scaling numerical badge
+│   │   └── TagCloudPicker            — Multi-select chip filter cloud with checkmarks
+│   │
+│   └── 📑 Drawers & Sheets (1)
+│       └── CustomBottomSheet         — Snapping multi-detent sheet with flick velocity
 │
 └── 🌌 Live Procedural Backgrounds (3 Views)
     ├── AuroraMeshGradientView    — Shifting multi-point northern lights gradient
